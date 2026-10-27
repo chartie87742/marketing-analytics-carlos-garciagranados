@@ -18,13 +18,17 @@ st.set_page_config(page_title="Segmentación de clientes", page_icon="📊", lay
 ATRIBUTOS = ["ingreso_anual", "gasto_total", "compras_tienda", "compras_web", "compras_catalogo",
              "visitas_web_mes", "recencia_dias", "hijos_pequenos", "edad"]
 SEMILLA = 42
-RUTA_DATOS = Path(__file__).parent / "data" / "clientes_retail.csv"
+BASE = Path(__file__).parent
+CANDIDATOS = [BASE / "data" / "clientes_retail.csv", BASE / "lab_segmentacion" / "data" / "clientes_retail.csv"]
+RUTA_DATOS = next((p for p in CANDIDATOS if p.exists()), CANDIDATOS[0])
 
 
 # ---------- Datos ----------
 @st.cache_data
 def leer_csv(fuente) -> pd.DataFrame:
     df = pd.read_csv(fuente)
+    # Encabezados en formato Orange (m# meta, D# discreta, C# continua): se quita el prefijo
+    df.columns = df.columns.str.replace(r"^[A-Za-z]{0,3}#", "", regex=True)
     if "respondio_ultima_campana" in df and df["respondio_ultima_campana"].dtype == object:
         df["respondio_ultima_campana"] = (df["respondio_ultima_campana"].astype(str).str.strip().str.lower()
                                           .isin(["1", "si", "sí", "yes", "true"]).astype(int))
